@@ -1,0 +1,42 @@
+[
+  {
+    "id": "mysql-main",
+    "name": "Main MySQL",
+    "engine": "mysql",
+    "env_file": "/apps/example-app/.env",
+    "env_map": {
+      "host": "DB_HOST",
+      "port": "DB_PORT",
+      "user": "DB_USERNAME",
+      "password": "DB_PASSWORD",
+      "db": "DB_DATABASE"
+    },
+    "host": "mysql",
+    "port": 3306,
+    "user": "app",
+    "database": "app"
+  },
+  {
+    "id": "postgres-main",
+    "name": "Main PostgreSQL",
+    "engine": "postgres",
+    "env_file": "/apps/example-app/.env",
+    "env_map": {
+      "host": "DB_HOST",
+      "port": "DB_PORT",
+      "user": "DB_USERNAME",
+      "password": "DB_PASSWORD",
+      "db": "DB_DATABASE"
+    },
+    "host": "postgres",
+    "port": 5432,
+    "user": "app",
+    "database": "app"
+  },
+  {
+    "id": "sqlite-main",
+    "name": "App SQLite",
+    "engine": "sqlite",
+    "path": "/sqlite-db/database.sqlite"
+  }
+]

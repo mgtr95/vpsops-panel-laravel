@@ -1,0 +1,48 @@
+{
+	{$CADDY_GLOBAL_OPTIONS}
+
+	frankenphp {
+		{$FRANKENPHP_CONFIG}
+	}
+
+	# HTTP only. TLS and Let's Encrypt stay on the VPS nginx + certbot edge.
+	# Do not enable auto_https — this process listens on :80 behind proxy_pass.
+	auto_https off
+	admin off
+
+	# nginx sits in front and sends X-Forwarded-Proto. Without this, PHP sees
+	# HTTP and Laravel/Vite emit http:// asset URLs on an HTTPS page (mixed content).
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$CADDY_EXTRA_CONFIG}
+
+{$SERVER_NAME:localhost} {
+	log {
+		output stderr
+		format console
+	}
+
+	root /app/public
+	encode zstd br gzip
+
+	@immutable path /build/* /images/* /storage/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	php_server {
+		try_files {path} index.php
+		# nginx terminates TLS on 443; this process only speaks HTTP on :80.
+		# Force PHP to treat the request as HTTPS so Laravel url()/Ziggy/redirects
+		# are https://, not mixed-content http://.
+		env HTTPS on
+	}
+}

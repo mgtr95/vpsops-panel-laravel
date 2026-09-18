@@ -1,0 +1,13 @@
+# Optional. Copy to docker-compose.override.yml only if this VPS needs extra
+# mounts (for example a SQLite volume). Website hosting no longer requires
+# an external Docker network — the panel creates and joins it itself.
+
+services:
+  dashboard:
+    volumes:
+      # - myapp_database:/sqlite-db:rw
+      - ${HOST_EXTRA_DIR:-./.keep/extra}:/extra:ro
+
+# volumes:
+#   myapp_database:
+#     external: true

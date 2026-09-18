@@ -1,0 +1,31 @@
+services:
+  nginx:
+    image: nginx:stable
+    container_name: vps_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./conf.d:/etc/nginx/conf.d:ro
+      - ./letsencrypt:/etc/letsencrypt:ro
+      - ./certbot-www:/var/www/certbot
+    networks:
+      - vps_proxy
+
+  certbot:
+    image: certbot/certbot
+    container_name: vps_certbot
+    restart: unless-stopped
+    volumes:
+      - ./letsencrypt:/etc/letsencrypt
+      - ./certbot-www:/var/www/certbot
+    entrypoint: >
+      sh -c "trap exit TERM; while :; do sleep 12h; done"
+    networks:
+      - vps_proxy
+
+networks:
+  vps_proxy:
+    name: vps_proxy
+    external: true

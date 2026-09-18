@@ -1,0 +1,40 @@
+---
+description: Container-alert and log-scan false positives already fixed — do not regress
+globs: backend/app/services/container_alerts_svc.py,backend/app/services/container_status.py,backend/app/services/log_match.py,backend/app/services/laravel_svc.py,frontend/src/pages/Docker.jsx,docs/AUDIT.md
+alwaysApply: false
+---
+
+# Do not reintroduce these false positives
+
+Full log: [docs/AUDIT.md](docs/AUDIT.md).
+
+## Queue worker hourly mail (2026-09-14)
+
+`queue:work --max-time=3600` exits cleanly every hour; Docker restarts it. Not a crash.
+
+- Mail `restart_loop` only for a real loop (2 polls still restarting, or 3 restarts in 10 min).
+- Do not mail `restart_count` for expected recyclers on a single recycle.
+- Do not delete `--max-time` from the panel queue command to silence alerts.
+
+## Log scan checkpoint, dashboard loop, URL traceback (2026-09-14)
+
+- Checkpoint the last Docker log **timestamp**. Do not hash the whole tail window
+  (a new info line would re-mail old errors).
+- Do not log-scan `vps_dashboard` (mail/SMTP failures become more mail).
+- Strip HTTP request targets / JSON `uri` before severity tokens (`/.env-traceback`
+  is not a traceback). Keep ignoring hashed Vite `*-error-*.js` assets.
+
+## Postgres `pg_isready` must pass `-d $DB` (2026-09-14)
+
+Healthcheck is `pg_isready -U ${DB_USERNAME:-laravel} -d ${DB_DATABASE:-laravel}`.
+Without `-d`, a user like `app_user` probes a database named `app_user` while the
+real DB is `app_db`, logging `FATAL` every 5s with health still green.
+
+## Exit 137 is not OOM (2026-09-14)
+
+OOM only when Docker sets `OOMKilled`. Compose recreate / stop-timeout SIGKILL
+is exit 137 without that flag — treat it like 143, not “Ran out of memory”.
+
+## Log scan vs Vite assets (2026-09-08)
+
+Do not substring-match `error` in hashed frontend asset names. Keep `log_match.py`.

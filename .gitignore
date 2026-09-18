@@ -1,0 +1,21 @@
+# Secrets & local machine config (never commit)
+.env
+docker-compose.override.yml
+config/apps.json
+config/databases.json
+
+# Runtime / build artifacts
+data/
+.keep/
+frontend/dist/
+frontend/node_modules/
+backend/__pycache__/
+backend/.venv/
+**/__pycache__/
+*.pyc
+.DS_Store
+
+# Editor
+.idea/
+.vscode/
+*.swp
