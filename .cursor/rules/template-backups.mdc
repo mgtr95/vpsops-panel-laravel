@@ -1,0 +1,20 @@
+---
+description: After a Laravel template switch, SQL backups must follow the new DB container
+globs: backend/app/services/laravel_svc.py,backend/app/services/backup_svc.py,backend/app/services/discover_svc.py,backend/app/services/db_svc.py,config/databases.json,docs/AUDIT.md,docs/ADOPT.md
+alwaysApply: false
+---
+
+# Template switch remaps SQL backups
+
+Full log: [docs/AUDIT.md](docs/AUDIT.md) (2026-09-14, leftover discovered SQL hostname).
+
+After adopt, the live DB is `{slug}_postgres` or `{slug}_mysql` (`{slug}-db`). Old discovered names (`legacy-postgres-2`, `{slug}-postgres`) must not keep dump jobs.
+
+- `upsert_database_config` replaces stale connections and remaps backup `connection_id`s.
+- Discovery must skip `managed` apps so repo compose hostnames are not re-added.
+- Dump fallback uses the panel host only when the stored container is gone.
+- Do **not** recreate the old discovered SQL container. Do **not** dump via generic hostname `postgres` from `vps_dashboard`.
+
+File backups are path syncs; they do not need this remap. SQLite addons have no `{slug}-db`.
+
+App-file dest is the selected remote folder. Sync **contents** of the chosen path (`storage/app/public/attachments`), not `dest/storage/app/...`. Do not pre-check whole `storage/app`. See [docs/AUDIT.md](docs/AUDIT.md) (2026-09-15, app files dump). **Always append AUDIT.md** when you change backup jobs.

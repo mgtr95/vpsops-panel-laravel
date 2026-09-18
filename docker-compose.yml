@@ -1,0 +1,102 @@
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vps_dashboard
+    restart: unless-stopped
+    expose:
+      - "9090"
+    env_file: .env
+    environment:
+      PANEL_CONFIG_DIR: /panel-config
+      APPS_ROOT: /apps
+      HOST_APPS_DIR: ${HOST_APPS_DIR:-}
+      COMPOSE_SCAN_PATHS: ${COMPOSE_SCAN_PATHS:-/apps}
+      LETSENCRYPT_PATH: /etc/letsencrypt
+      RCLONE_RC_URL: http://rclone:5572
+      DATA_DIR: /data
+      CERTBOT_CONTAINER: ${CERTBOT_CONTAINER:-}
+      NGINX_CONTAINER: ${NGINX_CONTAINER:-}
+      NGINX_CONF_DIR: ${NGINX_CONF_DIR:-}
+      PROXY_NETWORK: ${PROXY_NETWORK:-}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+      PANEL_DOMAIN: ${PANEL_DOMAIN:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      REQUIRE_2FA: ${REQUIRE_2FA:-true}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-12}
+      MAX_LOGIN_ATTEMPTS: ${MAX_LOGIN_ATTEMPTS:-5}
+      LOCKOUT_MINUTES: ${LOCKOUT_MINUTES:-15}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc/meminfo:/host/proc/meminfo:ro
+      - /proc/stat:/host/proc/stat:ro
+      - /proc/loadavg:/host/proc/loadavg:ro
+      - /proc/uptime:/host/proc/uptime:ro
+      - /proc/cpuinfo:/host/proc/cpuinfo:ro
+      - ./config:/panel-config
+      - dashboard_data:/data
+      - rclone_config:/config/rclone
+      - ${HOST_LETSENCRYPT_DIR:-./.keep/letsencrypt}:/etc/letsencrypt:ro
+      - ${HOST_APPS_DIR:-./.keep/apps}:/apps
+      # Same folder at the host path so `docker compose` bind mounts resolve
+      # on the daemon (.:/var/www/app → /home/.../apps/app, not /apps/app).
+      - ${HOST_APPS_DIR:-./.keep/apps}:${HOST_APPS_DIR:-/apps-host}
+      - ${HOST_SSH_DIR:-./.keep/ssh}:/root/.ssh-host:ro
+      - ${HOST_GITCONFIG:-./.keep/gitconfig}:/root/.gitconfig-host:ro
+    networks:
+      - panel
+    depends_on:
+      - rclone
+
+  # Public entry (Portainer-style):
+  # - No PANEL_DOMAIN → http://SERVER_IP:9090
+  # - With PANEL_DOMAIN → also enable docker-compose.https.yml (ports 80+443)
+  #   for automatic Let's Encrypt certificates and renewals
+  edge:
+    image: caddy:2-alpine
+    container_name: vps_dashboard_edge
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/edge/entrypoint.sh"]
+    environment:
+      PANEL_DOMAIN: ${PANEL_DOMAIN:-}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+      PANEL_AUTO_HTTPS: ${PANEL_AUTO_HTTPS:-}
+      UPSTREAM: dashboard:9090
+    volumes:
+      - ./edge/entrypoint.sh:/edge/entrypoint.sh:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "${PANEL_PORT:-9090}:9090"
+    networks:
+      - panel
+    depends_on:
+      - dashboard
+
+  rclone:
+    image: rclone/rclone:latest
+    container_name: vps_rclone
+    restart: unless-stopped
+    command:
+      - rcd
+      - --rc-addr=:5572
+      - --rc-no-auth
+      - --config=/config/rclone/rclone.conf
+    volumes:
+      - rclone_config:/config/rclone
+      - dashboard_data:/data
+      - ${HOST_APPS_DIR:-./.keep/apps}:/apps:ro
+    networks:
+      - panel
+
+volumes:
+  dashboard_data:
+  rclone_config:
+  caddy_data:
+  caddy_config:
+
+networks:
+  panel:
+    driver: bridge

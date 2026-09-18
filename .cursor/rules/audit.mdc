@@ -1,0 +1,12 @@
+---
+description: Append and read the VPSops audit log when fixing dash bugs
+alwaysApply: true
+---
+
+# Audit log
+
+When you diagnose or fix a VPSops dash bug, **append a dated entry** to [docs/AUDIT.md](docs/AUDIT.md) before you finish. Read that file first if the work touches an area already listed there.
+
+Entry shape: **Symptom**, **Cause**, **Fix**, **Do not**, **Tests**. Newest first under the intro.
+
+Do not reintroduce a listed fix. Do not skip the log because the code comment feels enough.

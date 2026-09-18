@@ -1,0 +1,15 @@
+# Optional: automatic HTTPS when PANEL_DOMAIN is set.
+# Requires ports 80 and 443 free on the host (no other nginx/caddy using them).
+#
+#   export PANEL_DOMAIN=panel.example.com
+#   export ACME_EMAIL=you@example.com
+#   docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
+#
+# DNS A record must point the domain to this VPS before Caddy can issue a cert.
+# Renewals are handled automatically by Caddy.
+
+services:
+  edge:
+    ports:
+      - "${PANEL_ACME_HTTP_PORT:-80}:80"
+      - "${PANEL_ACME_HTTPS_PORT:-443}:443"

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "example-app",
+    "name": "Example App",
+    "path": "/apps/example-app",
+    "source": "github",
+    "kind": "laravel",
+    "managed": true,
+    "compose_file": "docker-compose.panel.yml",
+    "pull": true,
+    "rebuild_cmd": ["docker", "compose", "-f", "docker-compose.panel.yml", "up", "-d", "--no-build"],
+    "restart_containers": ["example-app_app"],
+    "addons": { "database": "postgres", "redis": false, "queue": false, "scheduler": false, "mailpit": false },
+    "php": {
+      "upload_max_filesize_mb": 20,
+      "post_max_size_mb": 30,
+      "memory_limit_mb": 512,
+      "max_execution_time": 120,
+      "max_input_time": 120,
+      "client_max_body_size_mb": 32
+    }
+  },
+  {
+    "id": "proxy",
+    "name": "Reverse Proxy",
+    "path": "/apps/nginx",
+    "compose_file": "docker-compose.yml",
+    "pull": false,
+    "rebuild_cmd": ["docker", "compose", "up", "-d"],
+    "restart_containers": ["nginx"]
+  }
+]
